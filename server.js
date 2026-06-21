@@ -1,31 +1,37 @@
-const express = require('express');
-const fs = require('fs-extra');
-const path = require('path');
-const { exec } = require('child_process');
-const { getLlama } = require('node-llama-cpp');
+import express from 'express';
+import fs from 'fs-extra';
+import path from 'path';
+import { exec } from 'child_process';
+import { getLlama, LlamaChatSession } from 'node-llama-cpp';
+import cors from 'cors';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 app.use(express.json());
-app.use(express.static('public'));
+app.use(cors({ origin: '*' }));
+
+// FIX: Baris ini untuk mengatasi "Cannot GET /" saat dijalankan di lokal
+app.use(express.static(path.join(__dirname, 'docs')));
 
 const PORT = 5000;
 
-// Konfigurasi Default (Bisa diubah dinamis via Web UI)
+// Konfigurasi Default
 let config = {
     workspacePath: path.join(__dirname, 'workspace_default'),
-    modelPath: '', // Diisi via UI, misal: C:/Models/llama-3-8b.gguf
+    modelPath: '', 
     contextSize: 2048,
     systemPrompt: "Anda adalah AI asisten pengembang software. Anda dapat memberikan instruksi manipulasi file atau perintah terminal."
 };
 
-// Pastikan folder workspace default ada
 fs.ensureDirSync(config.workspacePath);
 
 let llama = null;
 let model = null;
 let context = null;
 
-// Helper inisialisasi ulang AI saat setting diubah
 async function initAI() {
     if (!config.modelPath || !await fs.pathExists(config.modelPath)) {
         console.log("Model GGUF belum diset atau tidak ditemukan.");
@@ -44,10 +50,9 @@ async function initAI() {
     }
 }
 
-// 1. ENDPOINT: SIMPAN & UPDATE SETTING (GGUF, Workspace, dll)
+// 1. ENDPOINT: CONFIG
 app.post('/api/config', async (req, res) => {
     const { workspacePath, modelPath, contextSize, systemPrompt } = req.body;
-    
     if (workspacePath) config.workspacePath = path.resolve(workspacePath);
     if (contextSize) config.contextSize = Number(contextSize);
     if (systemPrompt) config.systemPrompt = systemPrompt;
@@ -59,19 +64,15 @@ app.post('/api/config', async (req, res) => {
     }
 
     fs.ensureDirSync(config.workspacePath);
-
     let aiReady = true;
-    if (modelChanged) {
-        aiReady = await initAI();
-    }
+    if (modelChanged) aiReady = await initAI();
 
     res.json({ success: true, message: "Konfigurasi diperbarui", config, aiReady });
 });
 
-// GET CURRENT CONFIG
 app.get('/api/config', (req, res) => res.json(config));
 
-// 2. ENDPOINT: OPERASI FILE (Membaca & Menulis)
+// 2. ENDPOINT: FILE SYSTEM
 app.post('/api/fs', async (req, res) => {
     const { action, filePath, content } = req.body;
     const safePath = path.resolve(config.workspacePath, filePath);
@@ -95,7 +96,7 @@ app.post('/api/fs', async (req, res) => {
     }
 });
 
-// 3. ENDPOINT: EKSEKUSI TERMINAL
+// 3. ENDPOINT: TERMINAL
 app.post('/api/terminal', (req, res) => {
     const { command } = req.body;
     if (!command) return res.status(400).json({ error: "Command kosong" });
@@ -109,17 +110,14 @@ app.post('/api/terminal', (req, res) => {
     });
 });
 
-// 4. ENDPOINT: CHAT DENGAN OFFLINE AI (PROMPT)
+// 4. ENDPOINT: CHAT
 app.post('/api/chat', async (req, res) => {
     const { prompt } = req.body;
-    if (!context) {
-        return res.status(400).json({ error: "AI belum siap. Atur file GGUF Anda terlebih dahulu di pengaturan." });
-    }
+    if (!context) return res.status(400).json({ error: "AI belum siap. Atur file GGUF Anda terlebih dahulu." });
 
     try {
         const session = new LlamaChatSession({ contextSequence: context.getSequence() });
         const fullPrompt = `${config.systemPrompt}\n\nUser: ${prompt}\nAI:`;
-        
         const response = await session.prompt(fullPrompt);
         res.json({ success: true, response });
     } catch (err) {
@@ -130,3 +128,4 @@ app.post('/api/chat', async (req, res) => {
 app.listen(PORT, () => {
     console.log(`ForgeLocal.AI berjalan di http://localhost:${PORT}`);
 });
+

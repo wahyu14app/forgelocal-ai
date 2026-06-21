@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForgeLocal.AI - Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        body { background-color: #0f0f11; color: #e4e4e7; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #18181b; }
+        ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 3px; }
+    </style>
+</head>
+<body class="p-4 md:p-8 font-sans">
+
+    <div class="max-w-7xl mx-auto space-y-6">
+        <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-zinc-800 pb-4 gap-2">
+            <div>
+                <h1 class="text-2xl font-black tracking-tight text-white">ForgeLocal<span class="text-indigo-500">.AI</span></h1>
+                <p class="text-xs text-zinc-400">Offline AI Orchestrator & Code Assistant via GitHub Pages</p>
+            </div>
+            <div id="statusAI" class="text-xs px-3 py-1.5 rounded-full bg-zinc-900 border border-yellow-600/50 text-yellow-500 font-medium animate-pulse">
+                Status: AI Belum Dimuat
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <div class="bg-[#141417] p-5 rounded-xl border border-zinc-800/80 space-y-4 h-fit">
+                <div class="flex items-center gap-2 border-b border-zinc-800/60 pb-2">
+                    <span class="text-indigo-400 text-lg">⚙️</span>
+                    <h2 class="text-md font-bold text-zinc-200">Pengaturan Lingkungan</h2>
+                </div>
+                
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-1">Path File GGUF AI</label>
+                        <input id="modelPath" type="text" class="w-full bg-zinc-950 border border-zinc-700/60 p-2.5 rounded text-xs font-mono text-zinc-300 focus:outline-none focus:border-indigo-500 transition" placeholder="Contoh: /home/user/models/qwen2.5.gguf">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-1">Folder Workspace Proyek</label>
+                        <input id="workspacePath" type="text" class="w-full bg-zinc-950 border border-zinc-700/60 p-2.5 rounded text-xs font-mono text-zinc-300 focus:outline-none focus:border-indigo-500 transition" placeholder="Contoh: /home/user/projects/my-app">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-1">Context Size</label>
+                        <input id="contextSize" type="number" value="2048" class="w-full bg-zinc-950 border border-zinc-700/60 p-2.5 rounded text-xs font-mono text-zinc-300 focus:outline-none focus:border-indigo-500 transition">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-1">System Prompt Context</label>
+                        <textarea id="systemPrompt" rows="3" class="w-full bg-zinc-950 border border-zinc-700/60 p-2.5 rounded text-xs text-zinc-300 focus:outline-none focus:border-indigo-500 transition">Anda adalah AI asisten pengembang software. Anda dapat memberikan instruksi manipulasi file atau perintah terminal.</textarea>
+                    </div>
+                </div>
+
+                <button onclick="saveConfig()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white p-2.5 rounded text-xs font-bold tracking-wide transition shadow-lg shadow-indigo-600/10 active:scale-[0.98]">
+                    Simpan & Inisialisasi AI
+                </button>
+            </div>
+
+            <div class="lg:col-span-2 space-y-6">
+                
+                <div class="bg-[#141417] p-5 rounded-xl border border-zinc-800/80 space-y-3">
+                    <div class="flex items-center gap-2 text-emerald-400">
+                        <span>🤖</span>
+                        <h2 class="text-md font-bold text-zinc-200">AI Prompt Agent</h2>
+                    </div>
+                    <textarea id="aiPrompt" rows="3" class="w-full bg-zinc-950 border border-zinc-800 p-3 rounded text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-emerald-500 transition" placeholder="Ketik perintah... (Misal: 'halo ai, tolong perbaiki halaman dashboard')"></textarea>
+                    <div class="flex justify-end">
+                        <button onclick="sendPrompt()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded text-xs font-bold transition active:scale-[0.98]">
+                            Kirim Instruksi
+                        </button>
+                    </div>
+                    <div class="bg-zinc-950 p-4 rounded border border-zinc-900 min-h-24 text-xs font-mono text-zinc-300 whitespace-pre-wrap leading-relaxed shadow-inner" id="aiResponse">
+                        Respons pintar dari AI offline Anda akan muncul di sini...
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    
+                    <div class="bg-[#141417] p-4 rounded-xl border border-zinc-800/80 flex flex-col h-[340px]">
+                        <div class="flex items-center gap-2 text-sky-400 mb-3">
+                            <span>📄</span>
+                            <h3 class="text-sm font-bold text-zinc-200">File Manager & Editor</h3>
+                        </div>
+                        <input id="fileName" type="text" placeholder="Folder/NamaFile.js" class="w-full bg-zinc-950 border border-zinc-800 p-2 rounded text-xs font-mono text-zinc-300 focus:outline-none focus:border-sky-500 mb-2">
+                        <textarea id="fileContent" placeholder="// Tulis kode atau konten file di sini..." class="w-full flex-1 bg-zinc-950 border border-zinc-800 p-2.5 rounded text-xs font-mono text-zinc-300 focus:outline-none focus:border-sky-500 resize-none"></textarea>
+                        <div class="flex gap-2 mt-3">
+                            <button onclick="fileOp('read')" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 py-2 rounded text-xs font-semibold transition">
+                                Baca File
+                            </button>
+                            <button onclick="fileOp('write')" class="flex-1 bg-sky-600 hover:bg-sky-700 text-white py-2 rounded text-xs font-semibold transition">
+                                Simpan / Tulis
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-[#141417] p-4 rounded-xl border border-zinc-800/80 flex flex-col h-[340px]">
+                        <div class="flex items-center gap-2 text-red-400 mb-3">
+                            <span>💻</span>
+                            <h3 class="text-sm font-bold text-zinc-200">Terminal Executor</h3>
+                        </div>
+                        <div class="flex gap-2 mb-2">
+                            <input id="termCmd" type="text" placeholder="npm run build / git status / ls" class="flex-1 bg-zinc-950 border border-zinc-800 p-2 rounded text-xs font-mono text-zinc-300 focus:outline-none focus:border-red-500" onkeydown="if(event.key==='Enter') runCommand()">
+                            <button onclick="runCommand()" class="bg-red-950/40 hover:bg-red-900/60 text-red-400 border border-red-900/60 px-4 rounded text-xs font-bold transition">
+                                Run
+                            </button>
+                        </div>
+                        <pre id="termOutput" class="flex-1 bg-black text-green-400 p-3 rounded text-[11px] overflow-auto font-mono shadow-inner border border-zinc-900 leading-tight">Terminal siap menerima perintah dari workspace aktif...</pre>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Alamat Server API Lokal Anda
+        const API_BASE_URL = 'http://localhost:5000';
+
+        // 1. Simpan Config & Load Model GGUF via API
+        async function saveConfig() {
+            const statusDiv = document.getElementById('statusAI');
+            statusDiv.innerText = "Memuat Model GGUF...";
+            statusDiv.className = "text-xs px-3 py-1.5 rounded-full bg-zinc-900 border border-blue-600/50 text-blue-400 font-medium animate-pulse";
+            
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/config`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        modelPath: document.getElementById('modelPath').value,
+                        workspacePath: document.getElementById('workspacePath').value,
+                        contextSize: document.getElementById('contextSize').value,
+                        systemPrompt: document.getElementById('systemPrompt').value
+                    })
+                });
+                const data = await res.json();
+                
+                if (data.aiReady) {
+                    statusDiv.innerText = "Status: AI Siap (Offline)";
+                    statusDiv.className = "text-xs px-3 py-1.5 rounded-full bg-zinc-900 border border-green-600/50 text-green-400 font-medium";
+                } else {
+                    statusDiv.innerText = "Status: AI Gagal Dimuat";
+                    statusDiv.className = "text-xs px-3 py-1.5 rounded-full bg-zinc-900 border border-red-600/50 text-red-400 font-medium";
+                }
+                alert(data.message);
+            } catch (e) {
+                statusDiv.innerText = "Status: Offline (API Mati)";
+                statusDiv.className = "text-xs px-3 py-1.5 rounded-full bg-zinc-900 border border-red-600/50 text-red-400 font-medium";
+                alert("Gagal terhubung ke API lokal server. Pastikan 'npm start' sudah jalan di lokal.");
+            }
+        }
+
+        // 2. Chat / Kirim Instruksi ke AI
+        async function sendPrompt() {
+            const out = document.getElementById('aiResponse');
+            const promptVal = document.getElementById('aiPrompt').value;
+            if(!promptVal) return alert("Prompt tidak boleh kosong!");
+            
+            out.innerText = "AI sedang memproses instruksi dan berpikir secara mendalam...";
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/chat`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: promptVal })
+                });
+                const data = await res.json();
+                out.innerText = data.response || data.error;
+            } catch (e) { 
+                out.innerText = "Error: Gagal mendapatkan respons dari server lokal."; 
+            }
+        }
+
+        // 3. Operasi File System (Read / Write)
+        async function fileOp(action) {
+            const filePath = document.getElementById('fileName').value;
+            if(!filePath) return alert("Tentukan path/nama file terlebih dahulu!");
+
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/fs`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action,
+                        filePath,
+                        content: document.getElementById('fileContent').value
+                    })
+                });
+                const data = await res.json();
+                if(action === 'read') {
+                    document.getElementById('fileContent').value = data.content !== undefined ? data.content : '';
+                    if(data.error) alert(data.error);
+                } else {
+                    alert(data.message || data.error);
+                }
+            } catch (e) { 
+                alert("Gagal melakukan operasi file."); 
+            }
+        }
+
+        // 4. Eksekusi Perintah Terminal
+        async function runCommand() {
+            const out = document.getElementById('termOutput');
+            const cmdInput = document.getElementById('termCmd');
+            const command = cmdInput.value;
+            if(!command) return;
+
+            out.innerText = `$ ${command}\nExecuting...`;
+            cmdInput.value = ''; // Clear input setelah enter
+
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/terminal`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ command })
+                });
+                const data = await res.json();
+                
+                let outputLog = data.stdout;
+                if(data.stderr) outputLog += `\n[Stderr Error]:\n${data.stderr}`;
+                out.innerText = outputLog || "Selesai tanpa output log.";
+                out.scrollTop = out.scrollHeight; // Auto scroll ke bawah
+            } catch (e) { 
+                out.innerText = "Error: Gagal mengeksekusi perintah terminal."; 
+            }
+        }
+
+        // Sinkronisasi data saat pertama kali halaman diakses
+        window.addEventListener('DOMContentLoaded', () => {
+            fetch(`${API_BASE_URL}/api/config`)
+                .then(r => r.json())
+                .then(d => {
+                    document.getElementById('modelPath').value = d.modelPath || '';
+                    document.getElementById('workspacePath').value = d.workspacePath || '';
+                    document.getElementById('contextSize').value = d.contextSize || 2048;
+                    document.getElementById('systemPrompt').value = d.systemPrompt || '';
+                })
+                .catch(e => console.log("Gagal memuat konfigurasi awal lokal. Jalankan backend terlebih dahulu."));
+        });
+    </script>
+</body>
+</html>
+
