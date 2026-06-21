@@ -1,0 +1,14 @@
+{
+  "name": "forgelocal-ai",
+  "version": "1.0.0",
+  "description": "Offline AI Code Editor & Terminal Orchestrator",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "fs-extra": "^11.2.0",
+    "node-llama-cpp": "^3.0.0-beta.6"
+  }
+}

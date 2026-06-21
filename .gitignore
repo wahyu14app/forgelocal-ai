@@ -1,0 +1,24 @@
+# Dependency Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# File Model AI (Sangat Penting agar file GGUF yang berukuran giga tidak masuk Git)
+*.gguf
+*.bin
+models/
+
+# Folder Workspace / Hasil Kerja Editor (Opsional)
+# Jika Anda tidak ingin file testing di dalam workspace masuk ke Git:
+workspace_default/
+workspace/
+
+# Environment Variables & Konfigurasi Privat
+.env
+.env.local
+
+# Sistem Operasi
+.DS_Store
+Thumbs.db
